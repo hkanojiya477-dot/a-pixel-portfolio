@@ -23,7 +23,7 @@ export default async function WorkPage({
   const projects = await getPublishedProjects({ category: active });
 
   const chip = (selected: boolean) =>
-    `whitespace-nowrap rounded-full border px-4 py-2 text-sm transition-colors ${
+    `inline-block whitespace-nowrap rounded-full border px-4 py-2 text-sm transition-colors ${
       selected ? "border-lime bg-lime text-ink" : "border-white/15 text-white/70 hover:border-white/40 hover:text-white"
     }`;
 
