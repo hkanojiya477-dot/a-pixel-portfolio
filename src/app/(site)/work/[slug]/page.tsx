@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ProjectGallery from "@/components/site/ProjectGallery";
 import VideoEmbed from "@/components/site/VideoEmbed";
 import { mediaUrl } from "@/lib/media";
 import { getPublishedProjectBySlug, getPublishedProjects } from "@/lib/projects";
@@ -113,21 +114,7 @@ export default async function ProjectPage({ params }: Props) {
 
       {/* GALLERY */}
       {gallery.length > 0 && (
-        // Masonry like the Gallery page: equal-width columns, every image keeps its original shape.
-        <section className="mx-auto max-w-[1600px] columns-1 gap-4 px-5 pb-20 pt-8 sm:columns-2 md:gap-6 md:px-10 md:pb-28 lg:columns-3">
-          {gallery.map((src, i) => (
-            <div key={src} className="mb-4 break-inside-avoid overflow-hidden rounded-2xl bg-white/[0.03] md:mb-6">
-              <Image
-                src={src}
-                alt={`${project.title} — image ${i + 1}`}
-                width={0}
-                height={0}
-                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                className="h-auto w-full"
-              />
-            </div>
-          ))}
-        </section>
+        <ProjectGallery images={gallery} title={project.title} />
       )}
 
       {/* NEXT PROJECT */}
