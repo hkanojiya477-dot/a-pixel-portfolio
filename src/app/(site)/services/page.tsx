@@ -14,7 +14,7 @@ export default function ServicesPage() {
     <div className="pt-32 md:pt-44">
       <section className="mx-auto max-w-[1600px] px-5 md:px-10">
         <SectionLabel>Services</SectionLabel>
-        <h1 className="mt-6 max-w-6xl text-6xl font-semibold uppercase leading-[0.85] tracking-[-0.04em] md:text-[8.5vw]">
+        <h1 className="mt-6 max-w-6xl text-5xl font-semibold uppercase leading-[0.85] tracking-[-0.04em] md:text-[length:clamp(3.5rem,6vw,7rem)]">
           Everything your brand needs to{" "}
           <span className="font-serif font-normal normal-case italic text-lime">stand out.</span>
         </h1>
