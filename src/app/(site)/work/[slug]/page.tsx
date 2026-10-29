@@ -113,15 +113,17 @@ export default async function ProjectPage({ params }: Props) {
 
       {/* GALLERY */}
       {gallery.length > 0 && (
-        <section className="mx-auto grid max-w-[1600px] gap-4 px-5 pb-20 pt-8 sm:grid-cols-2 md:gap-8 md:px-10 md:pb-28">
+        // Masonry like the Gallery page: equal-width columns, every image keeps its original shape.
+        <section className="mx-auto max-w-[1600px] columns-1 gap-4 px-5 pb-20 pt-8 sm:columns-2 md:gap-6 md:px-10 md:pb-28 lg:columns-3">
           {gallery.map((src, i) => (
-            <div key={src} className={`relative aspect-[4/5] overflow-hidden rounded-2xl bg-white/[0.03] ${i % 3 === 0 ? "sm:col-span-2 sm:aspect-video" : ""}`}>
+            <div key={src} className="mb-4 break-inside-avoid overflow-hidden rounded-2xl bg-white/[0.03] md:mb-6">
               <Image
                 src={src}
                 alt={`${project.title} — image ${i + 1}`}
-                fill
-                sizes={i % 3 === 0 ? "100vw" : "(min-width: 640px) 50vw, 100vw"}
-                className="object-contain"
+                width={0}
+                height={0}
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="h-auto w-full"
               />
             </div>
           ))}
