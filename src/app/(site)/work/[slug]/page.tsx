@@ -115,14 +115,14 @@ export default async function ProjectPage({ params }: Props) {
       {gallery.length > 0 && (
         <section className="mx-auto grid max-w-[1600px] gap-4 px-5 pb-20 pt-8 sm:grid-cols-2 md:gap-8 md:px-10 md:pb-28">
           {gallery.map((src, i) => (
-            <div key={src} className={`overflow-hidden rounded-2xl bg-white/[0.03] ${i % 3 === 0 ? "sm:col-span-2" : ""}`}>
+            <div key={src} className={`flex items-center justify-center overflow-hidden rounded-2xl bg-white/[0.03] ${i % 3 === 0 ? "sm:col-span-2" : ""}`}>
               <Image
                 src={src}
                 alt={`${project.title} — image ${i + 1}`}
                 width={2000}
                 height={1250}
                 sizes={i % 3 === 0 ? "100vw" : "(min-width: 640px) 50vw, 100vw"}
-                className="h-auto w-full"
+                className="h-auto max-h-[75svh] w-auto max-w-full object-contain md:max-h-[85svh]"
               />
             </div>
           ))}
