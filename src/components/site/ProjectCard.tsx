@@ -13,7 +13,7 @@ interface Props {
 
 export default function ProjectCard({ project, index, variant = "default", priority = false }: Props) {
   const cover = mediaUrl(project.cover_image);
-  const aspect = variant === "wide" ? "aspect-[4/5] sm:aspect-[16/10] lg:aspect-[21/9]" : "aspect-[4/5] sm:aspect-[16/11]";
+  const aspect = variant === "wide" ? "aspect-[4/5] sm:aspect-[16/10] lg:aspect-[16/9]" : "aspect-[4/5] sm:aspect-[16/11]";
 
   return (
     <Link href={`/work/${project.slug}`} className="group block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime">
@@ -34,8 +34,8 @@ export default function ProjectCard({ project, index, variant = "default", prior
         )}
 
         {/* Cinematic letterbox bars that slide in on hover */}
-        <div className="absolute inset-x-0 top-0 h-0 bg-ink transition-all duration-700 ease-out group-hover:h-[7%]" />
-        <div className="absolute inset-x-0 bottom-0 h-0 bg-ink transition-all duration-700 ease-out group-hover:h-[7%]" />
+        <div className="absolute inset-x-0 top-0 h-0 bg-ink transition-all duration-700 ease-out group-hover:h-[3%]" />
+        <div className="absolute inset-x-0 bottom-0 h-0 bg-ink transition-all duration-700 ease-out group-hover:h-[3%]" />
 
         <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/10 to-black/20" />
 
