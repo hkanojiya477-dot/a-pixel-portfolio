@@ -31,7 +31,7 @@ export default async function WorkPage({
     <div className="mx-auto max-w-[1600px] px-5 pb-24 pt-32 md:px-10 md:pb-36 md:pt-44">
       <SectionLabel>Portfolio</SectionLabel>
       <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <h1 className="text-6xl font-semibold uppercase leading-[0.85] tracking-[-0.04em] md:text-[9vw]">
+        <h1 className="text-5xl font-semibold uppercase leading-[0.85] tracking-[-0.04em] md:text-[length:clamp(3.5rem,6.3vw,7rem)]">
           All <span className="font-serif font-normal normal-case italic text-lime">projects</span>
         </h1>
         <p className="font-mono text-sm text-white/50">

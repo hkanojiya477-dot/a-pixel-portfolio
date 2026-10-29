@@ -30,7 +30,7 @@ export default function AboutPage() {
     <div className="pt-32 md:pt-44">
       <section className="mx-auto max-w-[1600px] px-5 md:px-10">
         <SectionLabel>About the studio</SectionLabel>
-        <h1 className="mt-6 max-w-6xl text-5xl font-semibold leading-[0.95] tracking-[-0.03em] md:text-8xl">
+        <h1 className="mt-6 max-w-6xl text-4xl font-semibold leading-[0.95] tracking-[-0.03em] md:text-6xl lg:text-7xl">
           We&apos;re {site.name} — a studio obsessed with the{" "}
           <span className="font-serif font-normal italic text-lime">details</span> that make brands unforgettable.
         </h1>

@@ -63,7 +63,7 @@ export default async function ProjectPage({ params }: Props) {
               </Link>
             ))}
           </div>
-          <h1 className="max-w-6xl text-5xl font-semibold leading-[0.9] tracking-[-0.03em] md:text-8xl lg:text-9xl">
+          <h1 className="max-w-6xl text-4xl font-semibold leading-[0.9] tracking-[-0.03em] md:text-6xl lg:text-[5.5rem]">
             {project.title}
           </h1>
         </div>

@@ -13,7 +13,7 @@ export default function ContactPage() {
     <div className="mx-auto grid max-w-[1600px] gap-16 px-5 pb-24 pt-32 md:px-10 md:pb-36 md:pt-44 lg:grid-cols-[1fr_1.1fr] lg:gap-24">
       <div>
         <SectionLabel>Contact</SectionLabel>
-        <h1 className="mt-6 text-6xl font-semibold uppercase leading-[0.85] tracking-[-0.04em] md:text-8xl">
+        <h1 className="mt-6 text-5xl font-semibold uppercase leading-[0.85] tracking-[-0.04em] md:text-7xl">
           Let&apos;s
           <br />
           <span className="font-serif font-normal normal-case italic text-lime">talk.</span>
