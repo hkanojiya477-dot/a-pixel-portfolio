@@ -40,7 +40,7 @@ export default async function HomePage() {
             <p className="text-xs uppercase tracking-[0.3em] text-white/50">{site.location}</p>
           </div>
 
-          <h1 className="text-[15vw] font-semibold uppercase leading-[0.82] tracking-[-0.04em] sm:text-[13vw] lg:text-[11.5vw]">
+          <h1 className="text-[13vw] font-semibold uppercase leading-[0.82] tracking-[-0.04em] sm:text-[10vw] lg:text-[length:clamp(4rem,8vw,9.5rem)]">
             <span className="block animate-rise [animation-delay:100ms]">Bold ideas.</span>
             <span className="block animate-rise font-serif font-normal normal-case italic tracking-[-0.02em] text-lime [animation-delay:220ms]">
               pixel-perfect
