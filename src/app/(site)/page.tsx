@@ -31,7 +31,7 @@ export default async function HomePage() {
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,black_1px,transparent_1px),linear-gradient(to_bottom,black_1px,transparent_1px)] [background-size:96px_96px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
+          className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,var(--theme-fg)_1px,transparent_1px),linear-gradient(to_bottom,var(--theme-fg)_1px,transparent_1px)] [background-size:96px_96px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
         />
 
         <div className="relative mx-auto w-full max-w-[1600px]">
