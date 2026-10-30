@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Inter_Tight } from "next/font/google";
+import { Instrument_Serif, Outfit } from "next/font/google";
 import { site } from "@/lib/site";
 import "./globals.css";
 
-const sans = Inter_Tight({
+const sans = Outfit({
   subsets: ["latin"],
-  variable: "--font-inter-tight",
+  variable: "--font-outfit",
   display: "swap",
 });
 
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050505",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
