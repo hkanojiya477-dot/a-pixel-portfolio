@@ -6,20 +6,42 @@
 }
 
 /*
- * COLOUR THEME — light: white background, black text, electric-blue accent.
+ * COLOUR THEMES — light (default) and dark, switched with data-theme on <html>.
  * The token names are kept from the original dark design so no component had to change:
- *   lime  = accent colour (buttons, highlighted words)  -> electric blue
- *   ink   = page background                             -> white
- *   coal  = raised surfaces (e.g. contact form card)    -> light grey
- *   white = main text / lines colour                    -> black
- *   black = overlay colour on images & viewer           -> white
+ *   lime  = accent colour (buttons, highlighted words)
+ *   ink   = page background
+ *   coal  = raised surfaces (e.g. contact form card)
+ *   white = main text / lines colour
+ *   black = overlay colour on images & the image viewer
+ * Edit the actual colours in the two blocks below.
  */
+:root,
+[data-theme="light"] {
+  --theme-accent: #365cff; /* electric blue */
+  --theme-bg: #ffffff;
+  --theme-surface: #f5f5f5;
+  --theme-fg: #000000;
+  --theme-overlay: #ffffff;
+  --theme-grain: 0.035;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --theme-accent: #d5ff3f; /* lime */
+  --theme-bg: #050505;
+  --theme-surface: #0d0d0d;
+  --theme-fg: #ffffff;
+  --theme-overlay: #000000;
+  --theme-grain: 0.06;
+  color-scheme: dark;
+}
+
 @theme {
-  --color-lime: #365cff;
-  --color-ink: #ffffff;
-  --color-coal: #f5f5f5;
-  --color-white: #000000;
-  --color-black: #ffffff;
+  --color-lime: var(--theme-accent);
+  --color-ink: var(--theme-bg);
+  --color-coal: var(--theme-surface);
+  --color-white: var(--theme-fg);
+  --color-black: var(--theme-overlay);
 
   --animate-marquee: marquee 40s linear infinite;
   --animate-rise: rise 1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -36,26 +58,26 @@
 
 @utility text-outline {
   color: transparent;
-  -webkit-text-stroke: 1px rgb(0 0 0 / 0.35);
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--theme-fg) 35%, transparent);
 }
 
 html {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: var(--theme-bg);
+  color: var(--theme-fg);
   scroll-behavior: smooth;
 }
 
 body {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: var(--theme-bg);
+  color: var(--theme-fg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
 ::selection {
-  background: #365cff;
-  color: #ffffff;
+  background: var(--theme-accent);
+  color: var(--theme-bg);
 }
 
 /* Subtle film grain over the whole site — the "cinematic" texture. */
@@ -65,7 +87,7 @@ body {
   inset: 0;
   z-index: 60;
   pointer-events: none;
-  opacity: 0.035;
+  opacity: var(--theme-grain);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
