@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { navLinks, site } from "@/lib/site";
 import Logo from "./Logo";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
   const pathname = usePathname();
@@ -51,6 +52,7 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          <ThemeToggle />
           <Link
             href="/contact"
             className="rounded-full bg-lime px-5 py-2.5 text-sm font-medium text-ink transition-transform hover:scale-[1.03]"
@@ -59,6 +61,8 @@ export default function Header() {
           </Link>
         </nav>
 
+        <div className="flex items-center gap-2 md:hidden">
+        <ThemeToggle />
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -70,6 +74,7 @@ export default function Header() {
           <span className={`h-px w-6 bg-white transition-transform duration-300 ${open ? "translate-y-[3.5px] rotate-45" : ""}`} />
           <span className={`h-px w-6 bg-white transition-transform duration-300 ${open ? "-translate-y-[3.5px] -rotate-45" : ""}`} />
         </button>
+        </div>
       </div>
     </header>
 

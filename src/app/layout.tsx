@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Inter_Tight } from "next/font/google";
+import { Instrument_Serif, Outfit } from "next/font/google";
 import { site } from "@/lib/site";
 import "./globals.css";
 
-const sans = Inter_Tight({
+const sans = Outfit({
   subsets: ["latin"],
-  variable: "--font-inter-tight",
+  variable: "--font-outfit",
   display: "swap",
 });
 
@@ -33,12 +33,20 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050505",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${serif.variable}`}>
+    <html lang="en" data-theme="light" suppressHydrationWarning className={`${sans.variable} ${serif.variable}`}>
+      <head>
+        {/* Applies the visitor's saved theme before the page paints, so there's no flash. Light is the default. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="font-sans">{children}</body>
     </html>
   );

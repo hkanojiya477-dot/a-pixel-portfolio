@@ -402,7 +402,7 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
               <span className="block font-medium">Featured</span>
               <span className="text-xs text-white/40">Show on the home page</span>
             </span>
-            <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="h-5 w-5 accent-[#D5FF3F]" />
+            <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="h-5 w-5 accent-lime" />
           </label>
           <label className="block">
             <span className={labelText}>Display order</span>
