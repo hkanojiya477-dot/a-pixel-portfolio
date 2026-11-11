@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { mediaUrl } from "@/lib/media";
+import { mediaUrl, projectVideos } from "@/lib/media";
 import { serviceName } from "@/lib/services";
 import type { Project } from "@/lib/types";
 
@@ -13,6 +13,7 @@ interface Props {
 
 export default function ProjectCard({ project, index, variant = "default", priority = false }: Props) {
   const cover = mediaUrl(project.cover_image);
+  const videoCount = projectVideos(project).length;
   const aspect = variant === "wide" ? "aspect-[4/5] sm:aspect-[16/10] lg:aspect-[16/9]" : "aspect-[4/5] sm:aspect-[16/11]";
 
   return (
@@ -50,9 +51,9 @@ export default function ProjectCard({ project, index, variant = "default", prior
               </span>
             ))}
           </div>
-          {project.video_url && (
+          {videoCount > 0 && (
             <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-lime px-3 py-1 text-[11px] font-medium uppercase tracking-[0.15em] text-ink">
-              <span aria-hidden>▶</span> Film
+              <span aria-hidden>▶</span> {videoCount > 1 ? `${videoCount} videos` : "Video"}
             </span>
           )}
         </div>
