@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ProjectGallery from "@/components/site/ProjectGallery";
 import VideoEmbed from "@/components/site/VideoEmbed";
-import { mediaUrl } from "@/lib/media";
+import { mediaUrl, projectVideos } from "@/lib/media";
 import { getPublishedProjectBySlug, getPublishedProjects } from "@/lib/projects";
 import { serviceName } from "@/lib/services";
 
@@ -39,6 +39,9 @@ export default async function ProjectPage({ params }: Props) {
   const next = all.length > 1 ? all[(index + 1) % all.length] : null;
 
   const cover = mediaUrl(project.cover_image);
+  const videos = projectVideos(project);
+  const films = videos.filter((v) => v.shape === "landscape");
+  const reels = videos.filter((v) => v.shape !== "landscape");
   const gallery = project.gallery.map((path) => mediaUrl(path)).filter((u): u is string => Boolean(u));
 
   return (
@@ -105,10 +108,25 @@ export default async function ProjectPage({ params }: Props) {
         </div>
       </section>
 
-      {/* VIDEO */}
-      {project.video_url && (
-        <section className="mx-auto max-w-[1600px] px-5 pb-8 md:px-10">
-          <VideoEmbed url={project.video_url} title={project.title} poster={cover} />
+      {/* VIDEOS — films full width, reels side by side, each in its real shape */}
+      {videos.length > 0 && (
+        <section className="mx-auto max-w-[1600px] space-y-6 px-5 pb-8 md:space-y-10 md:px-10">
+          {films.map((video) => (
+            <VideoEmbed key={video.src} video={video} title={project.title} />
+          ))}
+          {reels.length > 0 && (
+            <div
+              className={
+                reels.length === 1
+                  ? "mx-auto max-w-sm"
+                  : `grid grid-cols-2 gap-4 md:gap-6 ${reels.length >= 4 ? "lg:grid-cols-4" : "md:grid-cols-3"}`
+              }
+            >
+              {reels.map((video) => (
+                <VideoEmbed key={video.src} video={video} title={project.title} />
+              ))}
+            </div>
+          )}
         </section>
       )}
 
