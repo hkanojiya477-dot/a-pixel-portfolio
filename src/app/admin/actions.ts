@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { MEDIA_BUCKET } from "@/lib/media";
+import { MEDIA_BUCKET, VIDEO_PATH, type ProjectVideo } from "@/lib/media";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult, ProjectInput, ProjectStatus } from "@/lib/types";
 import { validateProject } from "@/lib/validation";
@@ -21,7 +21,16 @@ function refreshWebsite() {
 function friendlyError(error: { code?: string; message: string }): string {
   if (error.code === "23505") return "Another project already uses this URL slug. Please choose a different one.";
   if (error.code === "42501") return "You don't have permission to do that.";
+  if (/videos/.test(error.message) && (error.code === "PGRST204" || error.code === "42703")) {
+    return "Video support isn't switched on in the database yet. Run supabase/videos.sql in Supabase → SQL Editor, then save again.";
+  }
   return `Something went wrong: ${error.message}`;
+}
+
+/** Uploaded video files (not links) of a project, so they can be cleaned up. */
+function uploadedVideoPaths(videos: unknown): string[] {
+  if (!Array.isArray(videos)) return [];
+  return (videos as ProjectVideo[]).map((v) => v?.src).filter((p): p is string => typeof p === "string" && VIDEO_PATH.test(p));
 }
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
@@ -59,7 +68,7 @@ export async function saveProject(
 
   const { data: existing, error: loadError } = await supabase
     .from("projects")
-    .select("cover_image, gallery")
+    .select("*")
     .eq("id", id)
     .maybeSingle();
   if (loadError || !existing) return { ok: false, error: "Project not found." };
@@ -68,8 +77,12 @@ export async function saveProject(
   if (error) return { ok: false, error: friendlyError(error) };
 
   // Delete images that were removed from this project.
-  const keep = new Set([row.cover_image, ...row.gallery].filter(Boolean));
-  const previous = [existing.cover_image, ...((existing.gallery as string[] | null) ?? [])];
+  const keep = new Set([row.cover_image, ...row.gallery, ...uploadedVideoPaths(row.videos)].filter(Boolean));
+  const previous = [
+    existing.cover_image,
+    ...((existing.gallery as string[] | null) ?? []),
+    ...uploadedVideoPaths(existing.videos),
+  ];
   await removeFiles(
     supabase,
     previous.filter((p): p is string => typeof p === "string" && !keep.has(p)),
@@ -112,7 +125,7 @@ export async function deleteProject(id: string): Promise<ActionResult> {
 
   const { data: existing } = await supabase
     .from("projects")
-    .select("cover_image, gallery")
+    .select("*")
     .eq("id", id)
     .maybeSingle();
   if (!existing) return { ok: false, error: "Project not found." };
@@ -122,7 +135,11 @@ export async function deleteProject(id: string): Promise<ActionResult> {
 
   await removeFiles(
     supabase,
-    [existing.cover_image, ...((existing.gallery as string[] | null) ?? [])].filter(
+    [
+      existing.cover_image,
+      ...((existing.gallery as string[] | null) ?? []),
+      ...uploadedVideoPaths(existing.videos),
+    ].filter(
       (p): p is string => typeof p === "string",
     ),
   );
