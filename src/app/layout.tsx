@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Outfit } from "next/font/google";
 import { site } from "@/lib/site";
+import AuthLinkForwarder from "@/components/site/AuthLinkForwarder";
 import "./globals.css";
 
 const sans = Outfit({
@@ -47,7 +48,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <AuthLinkForwarder />
+        {children}
+      </body>
     </html>
   );
 }
