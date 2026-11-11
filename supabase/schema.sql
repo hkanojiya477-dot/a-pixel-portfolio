@@ -57,6 +57,7 @@ create table if not exists public.projects (
   cover_image  text,
   gallery      text[] not null default '{}',
   video_url    text,
+  videos       jsonb not null default '[]'::jsonb check (jsonb_typeof(videos) = 'array'),
   featured     boolean not null default false,
   status       text not null default 'draft' check (status in ('draft', 'published')),
   sort_order   int not null default 0,
@@ -162,15 +163,16 @@ grant select, delete on public.contact_messages to authenticated;
 -- 4. IMAGE STORAGE — a public bucket for project images.
 --    Anyone can VIEW images (so the website can show them),
 --    only admins can UPLOAD, REPLACE or DELETE them.
---    Max 10 MB per image. SVG is intentionally not allowed (security).
+--    Images max 10 MB (checked in the admin), videos max 50 MB. SVG is intentionally not allowed (security).
 -- ---------------------------------------------------------------------
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'project-media',
   'project-media',
   true,
-  10485760,
-  array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+  52428800,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif',
+        'video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v']
 )
 on conflict (id) do update
   set public = excluded.public,
