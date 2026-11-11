@@ -9,6 +9,7 @@ import {
   SHAPE_ASPECT,
   SHAPE_LABEL,
   VIDEO_SHAPES,
+  defaultShape,
   mediaUrl,
   parseVideoUrl,
   projectVideos,
@@ -172,7 +173,7 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
       setVideoLink("");
       return;
     }
-    const shape: VideoShape = linkParsed.kind === "youtube" && linkParsed.isShort ? "portrait" : "landscape";
+    const shape: VideoShape = defaultShape(linkParsed);
     setVideos((v) => [...v, { src: link, shape, title: null }]);
     setVideoLink("");
   }
@@ -388,7 +389,7 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
             <div>
               <h2 className="font-medium">Videos</h2>
               <p className="text-xs text-white/40">
-                Upload MP4 / WebM / MOV (up to {MAX_VIDEO_MB} MB each) or paste a YouTube / Vimeo link. Reels and films are shown in their real shape.
+                Upload MP4 / WebM / MOV (up to {MAX_VIDEO_MB} MB each) or paste a YouTube / Instagram Reel / Vimeo link. Reels and films are shown in their real shape.
               </p>
             </div>
             <label className={`cursor-pointer rounded-lg border border-white/15 px-4 py-2 text-sm hover:border-lime hover:text-lime ${busy ? "pointer-events-none opacity-50" : ""}`}>
@@ -418,7 +419,7 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
                   addVideoLink();
                 }
               }}
-              placeholder="Paste a link: https://youtu.be/…  ·  youtube.com/shorts/…  ·  vimeo.com/…"
+              placeholder="Paste a link: instagram.com/reel/…  ·  youtu.be/…  ·  youtube.com/shorts/…  ·  vimeo.com/…"
             />
             <button
               type="button"
@@ -430,7 +431,7 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
             </button>
           </div>
           {!linkOk && (
-            <p className="mt-1 text-xs text-red-300">This link isn&apos;t recognised as YouTube, Vimeo or an .mp4/.webm file.</p>
+            <p className="mt-1 text-xs text-red-300">This link isn&apos;t recognised as YouTube, Instagram, Vimeo or an .mp4/.webm file.</p>
           )}
 
           {videos.length === 0 ? (
@@ -448,7 +449,9 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={`https://i.ytimg.com/vi/${source.id}/hqdefault.jpg`} alt="" className="h-full w-full object-cover" />
                       ) : (
-                        <div className="grid h-full place-items-center text-[10px] uppercase text-[#fff]/60">Vimeo</div>
+                        <div className="grid h-full place-items-center text-[10px] uppercase text-[#fff]/60">
+                          {source?.kind === "instagram" ? "Instagram" : "Vimeo"}
+                        </div>
                       )}
                     </div>
                     <div className="min-w-0 flex-1 space-y-2">
