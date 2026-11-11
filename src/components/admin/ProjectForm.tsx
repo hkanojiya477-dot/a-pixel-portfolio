@@ -4,7 +4,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { deleteProject, saveProject } from "@/app/admin/actions";
-import { MEDIA_BUCKET, mediaUrl, parseVideoUrl } from "@/lib/media";
+import {
+  MEDIA_BUCKET,
+  SHAPE_ASPECT,
+  SHAPE_LABEL,
+  VIDEO_SHAPES,
+  mediaUrl,
+  parseVideoUrl,
+  projectVideos,
+  resolveVideo,
+  type ProjectVideo,
+  type VideoShape,
+} from "@/lib/media";
 import { SERVICES } from "@/lib/services";
 import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +23,28 @@ import type { Project, ProjectInput, ProjectStatus } from "@/lib/types";
 
 const MAX_IMAGE_MB = 10;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
+const MAX_VIDEO_MB = 50; // Supabase free plan limit per file
+const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"];
+
+/** Reads a video file's width/height in the browser to guess reel vs. film. */
+function detectShape(file: File): Promise<VideoShape> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement("video");
+    v.preload = "metadata";
+    v.muted = true;
+    const done = (shape: VideoShape) => {
+      URL.revokeObjectURL(url);
+      resolve(shape);
+    };
+    v.onloadedmetadata = () => {
+      const r = v.videoWidth / (v.videoHeight || 1);
+      done(r < 0.9 ? "portrait" : r > 1.1 ? "landscape" : "square");
+    };
+    v.onerror = () => done("landscape");
+    v.src = url;
+  });
+}
 
 const input =
   "w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder:text-white/30 focus:border-lime focus:outline-none";
@@ -38,17 +71,19 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
   const [categories, setCategories] = useState<string[]>(project?.categories ?? []);
   const [cover, setCover] = useState<string | null>(project?.cover_image ?? null);
   const [gallery, setGallery] = useState<string[]>(project?.gallery ?? []);
-  const [videoUrl, setVideoUrl] = useState(project?.video_url ?? "");
+  const [videos, setVideos] = useState<ProjectVideo[]>(() => (project ? projectVideos(project) : []));
+  const [videoLink, setVideoLink] = useState("");
   const [featured, setFeatured] = useState(project?.featured ?? false);
   const [sortOrder, setSortOrder] = useState(String(project?.sort_order ?? 0));
   const [status, setStatus] = useState<ProjectStatus>(project?.status ?? "draft");
 
-  const [uploading, setUploading] = useState<null | "cover" | "gallery">(null);
+  const [uploading, setUploading] = useState<null | "cover" | "gallery" | "video">(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(justCreated ? "Project created and saved." : null);
 
   const effectiveSlug = slugEdited ? slug : slugify(title);
-  const videoOk = !videoUrl.trim() || parseVideoUrl(videoUrl) !== null;
+  const linkParsed = videoLink.trim() ? parseVideoUrl(videoLink) : null;
+  const linkOk = !videoLink.trim() || linkParsed !== null;
   const busy = pending || uploading !== null;
 
   async function uploadImages(files: File[]): Promise<string[]> {
@@ -92,6 +127,70 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
     }
   }
 
+  async function handleVideoUpload(fileList: FileList | null) {
+    const files = Array.from(fileList ?? []);
+    if (files.length === 0) return;
+    setError(null);
+    setUploading("video");
+    try {
+      for (const file of files) {
+        if (!VIDEO_TYPES.includes(file.type)) {
+          throw new Error(`"${file.name}" isn't a supported video. Use MP4, WebM or MOV.`);
+        }
+        if (file.size > MAX_VIDEO_MB * 1024 * 1024) {
+          throw new Error(
+            `"${file.name}" is larger than ${MAX_VIDEO_MB} MB. Export a smaller file (e.g. H.264, 1080p, ~8 Mbps) or upload it to YouTube/Vimeo and paste the link.`,
+          );
+        }
+        const shape = await detectShape(file);
+        const ext = (file.name.split(".").pop() ?? "mp4").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 4) || "mp4";
+        const safeExt = ["mp4", "webm", "mov", "m4v"].includes(ext) ? ext : "mp4";
+        const path = `projects/${crypto.randomUUID()}.${safeExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from(MEDIA_BUCKET)
+          .upload(path, file, { cacheControl: "31536000", contentType: file.type, upsert: false });
+        if (uploadError) {
+          const hint = /mime|size|exceed/i.test(uploadError.message)
+            ? " (Has supabase/videos.sql been run in Supabase?)"
+            : "";
+          throw new Error(`Upload failed for "${file.name}": ${uploadError.message}${hint}`);
+        }
+        setVideos((v) => [...v, { src: path, shape, title: null }]);
+      }
+      setNotice("Video uploaded — remember to save the project.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  function addVideoLink() {
+    const link = videoLink.trim();
+    if (!link || !linkParsed) return;
+    if (videos.some((v) => v.src === link)) {
+      setVideoLink("");
+      return;
+    }
+    const shape: VideoShape = linkParsed.kind === "youtube" && linkParsed.isShort ? "portrait" : "landscape";
+    setVideos((v) => [...v, { src: link, shape, title: null }]);
+    setVideoLink("");
+  }
+
+  function updateVideo(index: number, patch: Partial<ProjectVideo>) {
+    setVideos((list) => list.map((v, i) => (i === index ? { ...v, ...patch } : v)));
+  }
+
+  function moveVideo(index: number, direction: -1 | 1) {
+    setVideos((list) => {
+      const next = [...list];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return list;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
   function moveImage(index: number, direction: -1 | 1) {
     setGallery((g) => {
       const next = [...g];
@@ -119,7 +218,7 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
       categories,
       cover_image: cover,
       gallery,
-      video_url: videoUrl,
+      videos,
       featured,
       sort_order: sortOrder,
     };
@@ -144,7 +243,7 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
 
   function handleDelete() {
     if (!project) return;
-    if (!confirm(`Delete "${project.title}" permanently?\n\nThis also deletes its images and cannot be undone.`)) return;
+    if (!confirm(`Delete "${project.title}" permanently?\n\nThis also deletes its images and uploaded videos and cannot be undone.`)) return;
     startTransition(async () => {
       const result = await deleteProject(project.id);
       if (!result.ok) {
@@ -283,20 +382,112 @@ export default function ProjectForm({ project, justCreated = false }: Props) {
           )}
         </section>
 
-        {/* VIDEO */}
+        {/* VIDEOS */}
         <section className={card}>
-          <label className="block">
-            <span className={labelText}>Video link (optional)</span>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-medium">Videos</h2>
+              <p className="text-xs text-white/40">
+                Upload MP4 / WebM / MOV (up to {MAX_VIDEO_MB} MB each) or paste a YouTube / Vimeo link. Reels and films are shown in their real shape.
+              </p>
+            </div>
+            <label className={`cursor-pointer rounded-lg border border-white/15 px-4 py-2 text-sm hover:border-lime hover:text-lime ${busy ? "pointer-events-none opacity-50" : ""}`}>
+              {uploading === "video" ? "Uploading… (large files take a minute)" : "+ Upload videos"}
+              <input
+                type="file"
+                accept={VIDEO_TYPES.join(",")}
+                multiple
+                className="sr-only"
+                disabled={busy}
+                onChange={(e) => {
+                  void handleVideoUpload(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+
+          <div className="flex gap-2">
             <input
-              className={`${input} ${videoOk ? "" : "border-red-500/60"}`}
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              placeholder="https://www.youtube.com/watch?v=…  or  https://vimeo.com/…"
+              className={`${input} ${linkOk ? "" : "border-red-500/60"}`}
+              value={videoLink}
+              onChange={(e) => setVideoLink(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addVideoLink();
+                }
+              }}
+              placeholder="Paste a link: https://youtu.be/…  ·  youtube.com/shorts/…  ·  vimeo.com/…"
             />
-            <span className={`mt-1 block text-xs ${videoOk ? "text-white/40" : "text-red-300"}`}>
-              {videoOk ? "YouTube, Vimeo, or a direct https link to an .mp4 / .webm file." : "This link isn't recognised as YouTube, Vimeo or an .mp4/.webm file."}
-            </span>
-          </label>
+            <button
+              type="button"
+              onClick={addVideoLink}
+              disabled={!videoLink.trim() || !linkOk}
+              className="shrink-0 rounded-lg border border-white/15 px-4 text-sm hover:border-lime hover:text-lime disabled:opacity-40"
+            >
+              Add link
+            </button>
+          </div>
+          {!linkOk && (
+            <p className="mt-1 text-xs text-red-300">This link isn&apos;t recognised as YouTube, Vimeo or an .mp4/.webm file.</p>
+          )}
+
+          {videos.length === 0 ? (
+            <p className="mt-4 rounded-lg border border-dashed border-white/10 py-10 text-center text-sm text-white/40">No videos yet.</p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {videos.map((video, i) => {
+                const source = resolveVideo(video);
+                return (
+                  <li key={video.src} className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.02] p-3">
+                    <div className={`w-20 shrink-0 self-start overflow-hidden rounded-md bg-black sm:w-24 ${SHAPE_ASPECT[video.shape]}`}>
+                      {source?.kind === "file" ? (
+                        <video src={`${source.src}#t=0.1`} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+                      ) : source?.kind === "youtube" ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={`https://i.ytimg.com/vi/${source.id}/hqdefault.jpg`} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="grid h-full place-items-center text-[10px] uppercase text-[#fff]/60">Vimeo</div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <input
+                        className={`${input} py-2 text-sm`}
+                        value={video.title ?? ""}
+                        onChange={(e) => updateVideo(i, { title: e.target.value })}
+                        maxLength={120}
+                        placeholder="Video title (optional), e.g. Diwali Reel"
+                      />
+                      <p className="truncate text-xs text-white/40" title={video.src}>
+                        {source?.kind === "file" && !/^https?:/.test(video.src) ? "Uploaded file" : video.src}
+                      </p>
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex flex-wrap gap-1">
+                          {VIDEO_SHAPES.map((shape) => (
+                            <button
+                              key={shape}
+                              type="button"
+                              aria-pressed={video.shape === shape}
+                              onClick={() => updateVideo(i, { shape })}
+                              className={`rounded-full border px-2.5 py-1 ${video.shape === shape ? "border-lime bg-lime text-ink" : "border-white/15 text-white/60 hover:border-white/40"}`}
+                            >
+                              {SHAPE_LABEL[shape]}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex gap-1">
+                          <button type="button" onClick={() => moveVideo(i, -1)} disabled={i === 0} className="rounded bg-white/10 px-2 py-1 disabled:opacity-30" aria-label="Move up">↑</button>
+                          <button type="button" onClick={() => moveVideo(i, 1)} disabled={i === videos.length - 1} className="rounded bg-white/10 px-2 py-1 disabled:opacity-30" aria-label="Move down">↓</button>
+                          <button type="button" onClick={() => setVideos((v) => v.filter((_, j) => j !== i))} className="rounded bg-red-500/20 px-2 py-1 text-red-300" aria-label="Remove video">✕</button>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </section>
       </div>
 
