@@ -1,4 +1,4 @@
-import { parseVideoUrl } from "./media";
+import { VIDEO_PATH, VIDEO_SHAPES, parseVideoUrl, type ProjectVideo } from "./media";
 import { SERVICE_SLUGS } from "./services";
 import { SLUG_PATTERN, slugify } from "./slug";
 import type { ProjectInput } from "./types";
@@ -13,7 +13,8 @@ export interface CleanProject {
   categories: string[];
   cover_image: string | null;
   gallery: string[];
-  video_url: string | null;
+  video_url: null;
+  videos: ProjectVideo[];
   featured: boolean;
   sort_order: number;
 }
@@ -82,12 +83,23 @@ export function validateProject(input: ProjectInput): Result {
     return { ok: false, error: "A gallery image is invalid. Please remove it and upload again." };
   }
 
-  const videoUrl = str(input.video_url);
-  if (videoUrl && !parseVideoUrl(videoUrl)) {
-    return {
-      ok: false,
-      error: "Video link must be a YouTube or Vimeo link, or a direct https link to an .mp4/.webm file.",
-    };
+  const rawVideos = Array.isArray(input.videos) ? input.videos : [];
+  if (rawVideos.length > 20) return { ok: false, error: "A project can have up to 20 videos." };
+  const videos: ProjectVideo[] = [];
+  const seenVideos = new Set<string>();
+  for (const v of rawVideos) {
+    const src = str(v?.src);
+    if (!src || seenVideos.has(src)) continue;
+    if (!VIDEO_PATH.test(src) && !parseVideoUrl(src)) {
+      return {
+        ok: false,
+        error: "A video link isn't recognised. Use YouTube, Vimeo, a direct https .mp4/.webm link, or upload the file.",
+      };
+    }
+    const shape = (VIDEO_SHAPES as readonly string[]).includes(v?.shape) ? v.shape : "landscape";
+    const videoTitle = str(v?.title).slice(0, 120);
+    seenVideos.add(src);
+    videos.push({ src, shape, title: videoTitle || null });
   }
 
   return {
@@ -102,7 +114,9 @@ export function validateProject(input: ProjectInput): Result {
       categories,
       cover_image: cover,
       gallery: Array.from(new Set(gallery)),
-      video_url: videoUrl || null,
+      // Old single-link field is folded into the videos list when the project is saved.
+      video_url: null,
+      videos,
       featured: input.featured === true,
       sort_order: sortOrder,
     },

@@ -1,3 +1,5 @@
+import type { ProjectVideo } from "./media";
+
 export type ProjectStatus = "draft" | "published";
 
 export interface Project {
@@ -12,7 +14,10 @@ export interface Project {
   /** Path inside the "project-media" storage bucket, e.g. "projects/abc.jpg" */
   cover_image: string | null;
   gallery: string[];
+  /** Legacy single video link (kept so older projects still show their video). */
   video_url: string | null;
+  /** Uploaded videos and video links. Missing until supabase/videos.sql has been run. */
+  videos?: ProjectVideo[] | null;
   featured: boolean;
   status: ProjectStatus;
   sort_order: number;
@@ -32,7 +37,7 @@ export interface ProjectInput {
   categories: string[];
   cover_image: string | null;
   gallery: string[];
-  video_url: string;
+  videos: ProjectVideo[];
   featured: boolean;
   sort_order: string;
 }
