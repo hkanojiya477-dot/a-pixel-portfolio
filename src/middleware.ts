@@ -31,6 +31,9 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isLoginPage = path === "/admin/login";
 
+  // Password-reset pages must open for people who aren't signed in yet.
+  if (path === "/admin/forgot-password" || path === "/admin/reset-password") return response;
+
   const redirectTo = (target: string) => {
     const redirect = NextResponse.redirect(new URL(target, request.url));
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
