@@ -12,10 +12,11 @@ export function mediaUrl(path: string | null | undefined): string | null {
 export type VideoSource =
   | { kind: "youtube"; embedUrl: string; id: string; isShort: boolean }
   | { kind: "vimeo"; embedUrl: string }
+  | { kind: "instagram"; embedUrl: string; code: string }
   | { kind: "file"; src: string };
 
 /**
- * Accepts YouTube, Vimeo or direct .mp4 / .webm links and returns a safe
+ * Accepts YouTube, Vimeo, Instagram (reel / post) or direct .mp4 / .webm links and returns a safe
  * embeddable source. Anything else returns null (and is rejected on save).
  */
 export function parseVideoUrl(raw: string | null | undefined): VideoSource | null {
@@ -63,6 +64,17 @@ export function parseVideoUrl(raw: string | null | undefined): VideoSource | nul
     const params = new URLSearchParams({ dnt: "1" });
     if (hash && /^[a-f0-9]+$/i.test(hash)) params.set("h", hash);
     return { kind: "vimeo", embedUrl: `https://player.vimeo.com/video/${id}?${params.toString()}` };
+  }
+
+  // Instagram: /reel/CODE, /reels/CODE, /p/CODE, /tv/CODE, or /username/reel/CODE
+  if (host === "instagram.com" || host === "instagr.am") {
+    const parts = url.pathname.split("/").filter(Boolean);
+    const i = parts.findIndex((p) => ["reel", "reels", "p", "tv"].includes(p));
+    const code = i === -1 ? null : parts[i + 1];
+    if (code && /^[A-Za-z0-9_-]{5,40}$/.test(code)) {
+      return { kind: "instagram", code, embedUrl: `https://www.instagram.com/p/${code}/embed/` };
+    }
+    return null;
   }
 
   if (/\.(mp4|webm|mov)$/i.test(url.pathname)) {
@@ -120,6 +132,7 @@ export function videoThumbnail(source: VideoSource): string | null {
 /** Same embed, but starts playing straight away (used in the full-screen player). */
 export function autoplayUrl(source: VideoSource): string | null {
   if (source.kind === "file") return null;
+  if (source.kind === "instagram") return source.embedUrl; // Instagram has no autoplay option
   const url = new URL(source.embedUrl);
   url.searchParams.set("autoplay", "1");
   if (source.kind === "youtube") url.searchParams.set("playsinline", "1");
@@ -135,7 +148,14 @@ export function projectVideos(project: { videos?: unknown; video_url?: string | 
   if (clean.length > 0) return clean;
   if (project.video_url) {
     const parsed = parseVideoUrl(project.video_url);
-    return [{ src: project.video_url, shape: parsed?.kind === "youtube" && parsed.isShort ? "portrait" : "landscape" }];
+    return [{ src: project.video_url, shape: defaultShape(parsed) }];
   }
   return [];
+}
+
+/** Best first guess of a link's shape: Shorts and Instagram are vertical reels, the rest wide films. */
+export function defaultShape(source: VideoSource | null): VideoShape {
+  if (source?.kind === "instagram") return "portrait";
+  if (source?.kind === "youtube" && source.isShort) return "portrait";
+  return "landscape";
 }

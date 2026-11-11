@@ -93,7 +93,7 @@ export function validateProject(input: ProjectInput): Result {
     if (!VIDEO_PATH.test(src) && !parseVideoUrl(src)) {
       return {
         ok: false,
-        error: "A video link isn't recognised. Use YouTube, Vimeo, a direct https .mp4/.webm link, or upload the file.",
+        error: "A video link isn't recognised. Use YouTube, Instagram (reel or post), Vimeo, a direct https .mp4/.webm link, or upload the file.",
       };
     }
     const shape = (VIDEO_SHAPES as readonly string[]).includes(v?.shape) ? v.shape : "landscape";
